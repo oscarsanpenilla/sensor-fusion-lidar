@@ -45,10 +45,10 @@ struct KdTree
 		{
 			// condition = depth%dimension
 			uint condition = depth % 2;
-			if ((*node)->point[condition] >= point[condition])
-				insertHelper(&(*node)->right, depth + 1, point, id + 1);
+            if ((*node)->point[condition] > point[condition])
+                insertHelper(&(*node)->left, depth + 1, point, id);
 			else
-				insertHelper(&(*node)->left, depth + 1, point, id + 1);
+                insertHelper(&(*node)->right, depth + 1, point, id);
 		}
 	};
 
