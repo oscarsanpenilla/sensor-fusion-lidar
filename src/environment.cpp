@@ -34,6 +34,23 @@ std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer
     return cars;
 }
 
+void cityBlock(pcl::visualization::PCLVisualizer::Ptr &viewer)
+{
+    // ----------------------------------------------------
+    // -----Open 3D viewer and display City Block     -----
+    // ----------------------------------------------------
+
+    // RENDER OPTIONS
+
+
+    // POINT PROCESSOR
+    ProcessPointClouds<pcl::PointXYZI> processor;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = processor.loadPcd("../src/sensors/data/pcd/data_1/0000000000.pcd");
+    renderPointCloud(viewer, inputCloud, "inputCloud");
+
+
+}
+
 void simpleHighway(pcl::visualization::PCLVisualizer::Ptr &viewer)
 {
     // ----------------------------------------------------
@@ -119,7 +136,8 @@ int main(int argc, char **argv)
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
     CameraAngle setAngle = XY;
     initCamera(setAngle, viewer);
-    simpleHighway(viewer);
+//    simpleHighway(viewer);
+    cityBlock(viewer);
 
     while (!viewer->wasStopped())
     {
