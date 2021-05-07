@@ -72,14 +72,36 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr &viewer)
     filteredCloud = processor.FilterCloudBox(filteredCloud, min, max);
     filteredCloud = processor.FilterCloudBox(filteredCloud, minRoof, maxRoof, true);
 
-    renderBox(viewer, filterBox, 1, Color(0.f, 1.0f, 0.f), 0.2);
-    renderBox(viewer, filterRoofBox, 2, Color(1.f, 1.0f, 0.f), 0.5);
 
     // Point Cloud segmentation for ground and obstacle detection
     auto segCloud = processor.SegmentPlane(filteredCloud, 100, 0.1);
 
+
+    // Obstacles clustering
+    float disntaceTol = 0.5;
+    int minPoints = 20, maxPoints = 300;
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr>
+    obstaclesClusters = processor.Clustering(segCloud.second, disntaceTol, minPoints, maxPoints);
+
+    std::vector<Color> colors{Color(1,0,0), Color(0.5, 0.1, 0.5), Color(0,0,1), Color(1,1,0), Color(0,1,1)};
+    size_t clusterId = 0, clusterColorIdx = 0;
+    for (pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : obstaclesClusters)
+    {
+        std::cout << "Cluster id:" << clusterId << " size:";
+        processor.numPoints(cluster);
+        Box box = processor.BoundingBox(cluster);
+        clusterColorIdx = clusterId % colors.size();
+        renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId), colors.at(clusterColorIdx));
+        renderBox(viewer, box, clusterId, colors.at(clusterColorIdx), 0.3);
+        ++clusterId;
+    }
+
+    // Rendering section
+//    renderBox(viewer, filterBox, 100, Color(0.f, 1.0f, 0.f), 0.2);
+//    renderBox(viewer, filterRoofBox, 200, Color(1.f, 1.0f, 0.f), 0.5);
+//    renderPointCloud(viewer, segCloud.second, "obstaclesCloud", Color(1,0,0));
     renderPointCloud(viewer, segCloud.first, "groundCloud", Color(0,1,0));
-    renderPointCloud(viewer, segCloud.second, "obstaclesCloud", Color(1,0,0));
+
 }
 
 void simpleHighway(pcl::visualization::PCLVisualizer::Ptr &viewer)
