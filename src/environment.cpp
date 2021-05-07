@@ -46,9 +46,7 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr &viewer)
     // POINT PROCESSOR
     ProcessPointClouds<pcl::PointXYZI> processor;
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = processor.loadPcd("../src/sensors/data/pcd/data_1/0000000000.pcd");
-//    renderPointCloud(viewer, inputCloud, "inputCloud");
 
-    float filterResolution = 0.4f;
     Eigen::Vector4f min(-10.f, -10.f, -3.f, 1.f);
     Eigen::Vector4f max(30.f, 10.f, 3.f, 1.f);
     Box filterBox;
@@ -58,10 +56,25 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr &viewer)
     filterBox.x_max = max[0];
     filterBox.y_max = max[1];
     filterBox.z_max = max[2];
-    pcl::PointCloud<pcl::PointXYZI>::Ptr filteredCloud = processor.FilterCloud(inputCloud, filterResolution, min, max);
-    renderPointCloud(viewer, filteredCloud, "inputCloud");
 
+    Eigen::Vector4f minRoof(-1.5f, -1.5f, -1.0f, 1.0f);
+    Eigen::Vector4f maxRoof(3.0f, 1.5f, 0.3f, 1.0f);
+    Box filterRoofBox;
+    filterRoofBox.x_min = minRoof[0];
+    filterRoofBox.y_min = minRoof[1];
+    filterRoofBox.z_min = minRoof[2];
+    filterRoofBox.x_max = maxRoof[0];
+    filterRoofBox.y_max = maxRoof[1];
+    filterRoofBox.z_max = maxRoof[2];
+
+    float filterResolution = 0.4f;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr filteredCloud = processor.FilterCloud(inputCloud, filterResolution);
+    filteredCloud = processor.FilterCloudBox(filteredCloud, min, max);
+    filteredCloud = processor.FilterCloudBox(filteredCloud, minRoof, maxRoof, true);
+
+    renderPointCloud(viewer, filteredCloud, "filteredCloud");
     renderBox(viewer, filterBox, 1, Color(0.f, 1.0f, 0.f), 0.2);
+    renderBox(viewer, filterRoofBox, 2, Color(1.f, 1.0f, 0.f), 0.5);
 }
 
 void simpleHighway(pcl::visualization::PCLVisualizer::Ptr &viewer)
