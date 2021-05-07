@@ -7,6 +7,8 @@
 #include "processPointClouds.h"
 // using templates for processPointClouds so also include .cpp to help linker
 #include "processPointClouds.cpp"
+#include <thread>
+#include <chrono>
 
 std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer::Ptr &viewer)
 {
@@ -186,7 +188,7 @@ int main(int argc, char **argv)
     std::cout << "starting enviroment" << std::endl;
 
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
-    CameraAngle setAngle = XY;
+    CameraAngle setAngle = FPS;
     initCamera(setAngle, viewer);
 //    simpleHighway(viewer);
 
@@ -206,7 +208,7 @@ int main(int argc, char **argv)
         cityBlock(viewer, *processor, inputCloudI);
         if (++streamIterator == stream.end())
             streamIterator = stream.begin();
-
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         viewer->spinOnce();
     }
 }
