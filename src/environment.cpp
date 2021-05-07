@@ -72,9 +72,14 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr &viewer)
     filteredCloud = processor.FilterCloudBox(filteredCloud, min, max);
     filteredCloud = processor.FilterCloudBox(filteredCloud, minRoof, maxRoof, true);
 
-    renderPointCloud(viewer, filteredCloud, "filteredCloud");
     renderBox(viewer, filterBox, 1, Color(0.f, 1.0f, 0.f), 0.2);
     renderBox(viewer, filterRoofBox, 2, Color(1.f, 1.0f, 0.f), 0.5);
+
+    // Point Cloud segmentation for ground and obstacle detection
+    auto segCloud = processor.SegmentPlane(filteredCloud, 100, 0.1);
+
+    renderPointCloud(viewer, segCloud.first, "groundCloud", Color(0,1,0));
+    renderPointCloud(viewer, segCloud.second, "obstaclesCloud", Color(1,0,0));
 }
 
 void simpleHighway(pcl::visualization::PCLVisualizer::Ptr &viewer)
