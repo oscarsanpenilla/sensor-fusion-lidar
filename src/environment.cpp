@@ -47,8 +47,8 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr &viewer)
     ProcessPointClouds<pcl::PointXYZI> processor;
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = processor.loadPcd("../src/sensors/data/pcd/data_1/0000000000.pcd");
 
-    Eigen::Vector4f min(-10.f, -10.f, -3.f, 1.f);
-    Eigen::Vector4f max(30.f, 10.f, 3.f, 1.f);
+    Eigen::Vector4f min(-10.f, -6.0f, -3.f, 1.f);
+    Eigen::Vector4f max(30.f, 6.0f, 3.f, 1.f);
     Box filterBox;
     filterBox.x_min = min[0];
     filterBox.y_min = min[1];
