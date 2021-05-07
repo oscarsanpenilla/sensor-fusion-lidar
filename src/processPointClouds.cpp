@@ -1,6 +1,7 @@
 // PCL lib Functions for processing point clouds
 
 #include "processPointClouds.h"
+#include "pcl/filters/crop_box.h"
 
 //constructor:
 template <typename PointT>
@@ -17,19 +18,37 @@ void ProcessPointClouds<PointT>::numPoints(typename pcl::PointCloud<PointT>::Ptr
 }
 
 template <typename PointT>
-typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(typename pcl::PointCloud<PointT>::Ptr cloud, float filterRes, Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint)
+typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(typename pcl::PointCloud<PointT>::Ptr cloud,
+                                                                              float filterRes,
+                                                                              Eigen::Vector4f minPoint,
+                                                                              Eigen::Vector4f maxPoint)
 {
 
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
 
     // TODO:: Fill in the function to do voxel grid point reduction and region based filtering
+    typename pcl::PointCloud<PointT>::Ptr filteredCloud (new pcl::PointCloud<PointT>());
+    typename pcl::PointCloud<PointT>::Ptr filteredCloudCrop (new pcl::PointCloud<PointT>());
+
+    // Create a filtering object
+    pcl::VoxelGrid<PointT> voxel;
+    voxel.setInputCloud(cloud);
+    voxel.setLeafSize(filterRes, filterRes, filterRes);
+    voxel.filter(*filteredCloud);
+
+    // Create a filter when given a box, filters all data inside the box
+    typename pcl::CropBox<PointT> cropBoxFilter;
+    cropBoxFilter.setInputCloud(filteredCloud);
+    cropBoxFilter.setMin(minPoint);
+    cropBoxFilter.setMax(maxPoint);
+    cropBoxFilter.filter(*filteredCloudCrop);
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "filtering took " << elapsedTime.count() << " milliseconds" << std::endl;
 
-    return cloud;
+    return filteredCloudCrop;
 }
 
 template <typename PointT>
