@@ -133,22 +133,20 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr &viewer)
     int minPoints = 3, maxPoints = 300;
     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloudClusters = processor.Clustering(segResult.second, distanceTol, minPoints, maxPoints);
 
-    int clusterId = 0;
-    std::vector<Color> colors{Color(1, 0, 0), Color(0.5, 0.1, 0.5), Color(0, 0.0, 1.0)};
+    std::vector<Color> colors{Color(1,0,0), Color(0.5, 0.1, 0.5), Color(0,0,1), Color(1,1,0), Color(0,1,1)};
+    size_t clusterId = 0, clusterColorIdx = 0;
     for (pcl::PointCloud<pcl::PointXYZ>::Ptr cluster : cloudClusters)
     {
-        std::cout << "Cluster size: ";
+        float x = cluster->points[0].x;
+        float y = cluster->points[0].y;
+        float z = cluster->points[0].z;
+        float distance = sqrt(x*x + y*y + z*z);
+        std::cout << "Cluster id:" << clusterId << " Distance: " << distance << " size:";
         processor.numPoints(cluster);
         Box box = processor.BoundingBox(cluster);
-        if (clusterId < colors.size())
-        {
-            renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId), colors.at(clusterId));
-            renderBox(viewer, box, clusterId, colors.at(clusterId), 0.7);
-        }
-        else
-        {
-            renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId));
-        }
+        clusterColorIdx = clusterId % colors.size();
+        renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId), colors.at(clusterColorIdx));
+        renderBox(viewer, box, clusterId, colors.at(clusterColorIdx), 0.3);
         ++clusterId;
     }
 }
@@ -188,27 +186,53 @@ int main(int argc, char **argv)
     std::cout << "starting enviroment" << std::endl;
 
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
-    CameraAngle setAngle = FPS;
+    CameraAngle setAngle = Side;
     initCamera(setAngle, viewer);
 //    simpleHighway(viewer);
 
-    ProcessPointClouds<pcl::PointXYZI>* processor (new ProcessPointClouds<pcl::PointXYZI>());
-    std::vector<boost::filesystem::path> stream = processor->streamPcd("../src/sensors/data/pcd/data_1");
+    ProcessPointClouds<pcl::PointXYZ>* processor (new ProcessPointClouds<pcl::PointXYZ>());
+    std::vector<boost::filesystem::path> stream = processor->streamPcd("/home/oscar/dev/catkin_ws/src/ti_mmwave_rospkg/data/pcd/");
     auto streamIterator = stream.begin();
-    pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloudI;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloudI;
+        std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloudClusters;
 
+    int count = 0;
     while (!viewer->wasStopped())
     {
         // Clear viewer
         viewer->removeAllPointClouds();
         viewer->removeAllShapes();
+        viewer->addCoordinateSystem();
 
         // Load pcd and run obstacle detection prcess
-        inputCloudI = processor->loadPcd((*streamIterator).string());
-        cityBlock(viewer, *processor, inputCloudI);
+        inputCloudI = processor->loadPcd(std::string("/home/oscar/dev/catkin_ws/src/ti_mmwave_rospkg/data/pcd/") + std::to_string(count++)+std::string(".pcd"));
+        renderPointCloud(viewer, inputCloudI, "input", Color(1,0,0));
+        float distanceTol = 0.7;
+        int minPoints = 1, maxPoints = 300;
+        cloudClusters = processor->Clustering(inputCloudI, distanceTol, minPoints, maxPoints);
+
+        std::vector<Color> colors{Color(1,0,0), Color(0.5, 0.1, 0.5), Color(0,0,1), Color(1,1,0), Color(0,1,1)};
+        size_t clusterId = 0, clusterColorIdx = 0;
+        for (pcl::PointCloud<pcl::PointXYZ>::Ptr cluster : cloudClusters)
+        {
+            float x = cluster->points[0].x;
+            float y = cluster->points[0].y;
+            float z = cluster->points[0].z;
+            float distance = sqrt(x*x + y*y + z*z);
+            std::cout << "Cluster id:" << clusterId << " Distance: " << distance << " size:";
+            processor->numPoints(cluster);
+            Box box = processor->BoundingBox(cluster);
+            clusterColorIdx = clusterId % colors.size();
+            renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId), colors.at(clusterColorIdx));
+            renderBox(viewer, box, clusterId, colors.at(clusterColorIdx), 0.3);
+            ++clusterId;
+        }
         if (++streamIterator == stream.end())
+        {
             streamIterator = stream.begin();
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            count = 0;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         viewer->spinOnce();
     }
 }
